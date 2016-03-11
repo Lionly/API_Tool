@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>API 测试工具</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="css/index.css" rel="stylesheet"> -->
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="//cdn.bootcss.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="//cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+    .popup {
+    position: fixed;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.58);
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+.popup > form {
+    background: white;
+    margin: 45px auto;
+    width: 580px;
+    padding: 30px;
+    border-radius: 3px;
+    box-shadow: 0 0 53px rgba(0, 0, 0, 0.15);
+}
+    pre {outline: 1px solid #ccc; padding: 5px; margin: 5px; }
+    .string { color: green; }
+    .number { color: darkorange; }
+    .boolean { color: blue; }
+    .null { color: magenta; }
+    .key { color: red; }
+</style>
+  </head>
+  <body>
+
+  <div class="container">
+
+    <h1>API 测试工具 <small><a href="javascript:;" onclick="seting()">设置</a></small></h1>
+
+  <div class="row">
+  <div class="col-xs-12">
+  <div class="panel panel-info">
+    <div class="panel-heading">当前 HOST： <span id="hostshow"></span> 。。。 && 测试 key <small>"X-Apikey": 8787bdfea6017576bbfd985ed6065915</small></div>
+    <div class="panel-body">
+      <form class="form-horizontal">
+      <div class="form-group">
+        <label for="url" class="col-sm-3 control-label">待测试接口的 URL：</label>
+        <div class="col-sm-9">
+          <input type="text" class="form-control" id="url" placeholder="user/info" value="user/info" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="url" class="col-sm-3 control-label">POST 提交的参数：</label>
+        <div class="col-sm-3">
+          <button id="addrow" type="button" class="btn btn-success btn-block">添加一行</button>
+        </div>
+        <div class="col-sm-6">
+          <span>如不需要参数，下面留空即可</span>
+        </div>
+      </div>
+      <div class="form-group data">
+        <div class="col-sm-3">
+          <div class="input-group">
+          <span class="input-group-addon">Key</span>
+          <input type="text" class="form-control data_k">
+        </div>
+        </div>
+        <div class="col-sm-6">
+          <div class="input-group">
+          <span class="input-group-addon">Value</span>
+          <input type="text" class="form-control data_v">
+        </div>
+        </div>
+        <div class="col-sm-3">
+          <button type="button" class="btn btn-danger btn-block" onclick="del(this)">删</button>
+        </div>
+      </div>
+      <div class="form-group" id="endrow">
+        <div class="col-sm-offset-2 col-sm-3">
+          <button id="submit" type="button" class="btn btn-primary btn-lg btn-block">提 交</button>
+        </div>
+        <!-- <div class="col-sm-offset-2 col-sm-3">
+          <button type="button" class="btn btn-danger btn-lg btn-block" onclick="windowCommand('close')">关 闭</button>
+        </div> -->
+      </div>
+    </form>
+    </div>
+  </div>
+  </div>
+  </div>
+
+
+  <div class="row">
+  <div class="col-xs-12">
+  <div class="panel panel-success">
+    <div class="panel-heading">结果 <span id="num">0</span></div>
+    <div class="panel-body">
+    <pre id="show"></pre>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  </div>
+
+<div class="popup" style="display: none;">
+    <form class="form-horizontal">
+        <fieldset>
+
+        <!-- Form Name -->
+        <legend>设置</legend>
+
+        <!-- Text input-->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="name.first">API HOST:</label>
+          <div class="col-md-6">
+          <input id="host" name="host" type="text" placeholder="" class="form-control input-md" required="" value="http://api.demo.com/">
+          <!-- <span class="help-block">Your first name.</span> -->
+          </div>
+        </div>
+
+        <!-- Button (Double) -->
+        <div class="form-group">
+          <label class="col-md-4 control-label" for="cancel"></label>
+          <div class="col-md-6">
+            <button type="button" id="cancel" class="btn btn-default cancel">取消</button>
+            <button type="submit" id="save" class="btn btn-success submit">确定</button>
+          </div>
+        </div>
+
+        </fieldset>
+    </form>
+</div>
+
+    <script src="js/jquery.min.js"></script>
+    <script src="js/layer/layer.js"></script>
+    <script src="js/jquery-prompt21.min.js"></script>
+  </body>
+  <script type="text/javascript">
+$(document).ready(function(){
+  if (!localStorage['host']) {
+    seting()
+  }else{
+    var host = localStorage['host'];
+    $('input#host').val(host)
+    $('span#hostshow').text(host)
+  }
+  
+});
+
+var popup = $(".popup").prompt21();
+var num = 1;
+var rowHtml = '<div class="form-group data">';
+    rowHtml += '<div class="col-sm-3">';
+    rowHtml += '<div class="input-group">';
+    rowHtml += '<span class="input-group-addon">Key</span>';
+    rowHtml += '<input type="text" class="form-control data_k">';
+    rowHtml += '</div>';
+    rowHtml += '</div>';
+    rowHtml += '<div class="col-sm-6">';
+    rowHtml += '<div class="input-group">';
+    rowHtml += '<span class="input-group-addon">Value</span>';
+    rowHtml += '<input type="text" class="form-control data_v">';
+    rowHtml += '</div>';
+    rowHtml += '</div>';
+    rowHtml += '<div class="col-sm-3">';
+    rowHtml += '<button type="button" class="btn btn-danger btn-block" onclick="del(this)">删</button>';
+    rowHtml += '</div>';
+    rowHtml += '</div>';
+
+// 添加一行
+$('#addrow').click(function () {
+  $('#endrow').before(rowHtml);
+})
+
+// 删除一行
+function del(o) {
+  $(o).parent().parent().remove();
+}
+
+// 提交测试
+$('#submit').click(function () {
+  var key = '8787bdfea6017576bbfd985ed6065915';
+  var host = localStorage['host'];
+  // var host = 'http://api.demo.com/';
+  var data = {};
+  $('.data').each(function (i, o) {
+    var $this = $(o);
+    var k = $this.find('input.data_k').val();
+    var v = $this.find('input.data_v').val();
+    data[k] = v;
+  });
+  $.ajax({
+        "url": host + $('#url').val(),
+        "method": "POST",
+        "cache": false,
+        "headers": { "X-Apikey": key },
+        "data": data,
+        "dataType": 'JSON'
+  }).success(function (data, status, header) {
+      $('#show').html(syntaxHighlight(data));
+      $('#num').html(num);
+      num ++;
+  }).fail(function (header, status, errorThrown) {
+      layer.msg('请求接口出错');
+  })
+});
+
+function seting() {
+  popup.getData(function (err, data) {
+    localStorage['host'] = data.host;
+  });
+}
+// 格式化 JSON
+function syntaxHighlight(json) {
+    if (typeof json != 'string') {
+        json = JSON.stringify(json, undefined, 2);
+    }
+    json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+        var cls = 'number';
+        if (/^"/.test(match)) {
+            if (/:$/.test(match)) {
+                cls = 'key';
+            } else {
+                cls = 'string';
+            }
+        } else if (/true|false/.test(match)) {
+            cls = 'boolean';
+        } else if (/null/.test(match)) {
+            cls = 'null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+    });
+}
+    
+
+  </script>
+</html>
+
